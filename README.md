@@ -5,7 +5,7 @@ sitemapgen is a Go library to easy generate sitemap.xml files that follows to [s
 ```go
 import (
     "fmt"
-    "gtihub.com/moonwalker/sitemapgen"
+    "github.com/moonwalker/sitemapgen"
 )
 // Create sitemap object to work with
 sitemap := sitemapgen.CreateSitemap()
