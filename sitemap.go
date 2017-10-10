@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"time"
 )
 
@@ -18,8 +19,11 @@ const (
 	YEARLY  ChangeFreq = "yearly"
 	NEVER   ChangeFreq = "never"
 
+	ALTERNATE = "alternate"
+
 	xmlDefinition = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-	xmlns         = "http://www.sitemaps.org/schemas/sitemap/0.9"
+	xmlnsSitemap  = "http://www.sitemaps.org/schemas/sitemap/0.9"
+	xmlnxXhtml    = "http://www.w3.org/1999/xhtml"
 )
 
 type XMLTime struct {
@@ -27,17 +31,26 @@ type XMLTime struct {
 }
 
 type Sitemap struct {
-	XMLName xml.Name `xml:"urlset"`
-	XMLNS   string   `xml:"xmlns,attr"`
-	Urls    []Url    `xml:",innerxml"`
+	XMLName    xml.Name `xml:"urlset"`
+	XMLNS      string   `xml:"xmlns,attr"`
+	XMLNSXHTML *string  `xml:"xmlns:xhtml,attr,omitempty"`
+	Urls       []Url    `xml:",innerxml"`
 }
 
 type Url struct {
-	XMLName    xml.Name    `xml:"url"`
-	Location   string      `xml:"loc"`
-	LastMod    *XMLTime    `xml:"lastmod,omitempty"`
-	ChangeFreq *ChangeFreq `xml:"changefreq,omitempty"`
-	Priority   *float32    `xml:"priority,omitempty"`
+	XMLName    xml.Name     `xml:"url"`
+	Location   string       `xml:"loc"`
+	LastMod    *XMLTime     `xml:"lastmod,omitempty"`
+	ChangeFreq *ChangeFreq  `xml:"changefreq,omitempty"`
+	Priority   *float32     `xml:"priority,omitempty"`
+	Alternates *[]Alternate `xml:",innerxml"`
+}
+
+type Alternate struct {
+	XMLName xml.Name `xml:"xhtml:link,allowempty"`
+	Rel     string   `xml:"rel,attr"`
+	Lang    string   `xml:"hreflang,attr"`
+	Href    string   `xml:"href,attr"`
 }
 
 // MarshalText implements the encoding.TextMarshaler interface.
@@ -53,12 +66,24 @@ func (t XMLTime) MarshalText() ([]byte, error) {
 // CreateSitemap creates sitemap
 func CreateSitemap() Sitemap {
 	return Sitemap{
-		XMLNS: xmlns,
+		XMLNS: xmlnsSitemap,
 	}
+}
+
+func (s *Sitemap) AddAlternateSupport() {
+	def := xmlnxXhtml
+	s.XMLNSXHTML = &def
+}
+
+func (s *Sitemap) RemoveAlternateSupport() {
+	s.XMLNSXHTML = nil
 }
 
 // AddUrl adds the url to the sitemap
 func (s *Sitemap) AddUrl(url Url) {
+	if url.Alternates != nil {
+		s.AddAlternateSupport()
+	}
 	s.Urls = append(s.Urls, url)
 }
 
@@ -72,7 +97,12 @@ func (s *Sitemap) GetXMLOutput() ([]byte, error) {
 	for _, b := range output {
 		o = append(o, b)
 	}
-	return o, err
+
+	// Fix to remove ugly xml with empty body
+	outputString := fmt.Sprintf("%s", o)
+	outputFix := strings.Replace(outputString, "></xhtml:link>", "/>", -1)
+
+	return []byte(outputFix), err
 }
 
 // WriteToFile generates the sitemap.xml content and writes it to the specified file
@@ -113,4 +143,19 @@ func (u *Url) SetPriority(p float32) {
 		p = 1
 	}
 	u.Priority = &p
+}
+
+func (u *Url) AddAlternate(lang string, href string) {
+	alternate := Alternate{
+		Rel:  ALTERNATE,
+		Lang: lang,
+		Href: href,
+	}
+
+	if u.Alternates != nil {
+		*u.Alternates = append(*u.Alternates, alternate)
+	} else {
+		alts := []Alternate{alternate}
+		u.Alternates = &alts
+	}
 }

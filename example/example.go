@@ -15,6 +15,7 @@ func main() {
 	url1.SetChangeFreq(gen.WEEKLY)
 	url1.SetPriority(0.5)
 	url1.SetLastModified(time.Now())
+	url1.AddAlternate("en", "http://example.example/en/example/slug1")
 
 	url2 := gen.CreateUrl("http://example.example/example/slug2")
 	url3 := gen.CreateUrl("http://example.example/example/slug3")

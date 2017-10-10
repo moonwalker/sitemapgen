@@ -1,6 +1,8 @@
 # sitemapgen
 sitemapgen is a Go library to easy generate sitemap.xml files that follows to [sitemap protocol]
 
+sitemapgen also supports localization urls following the xhtml specification. Read more on [google sitemap alternate language]
+
 # Usage
 ```go
 import (
@@ -27,3 +29,4 @@ if err != nil {
 ```
 
  [sitemap protocol]: <https://www.sitemaps.org/protocol.html>
+ [google sitemap alternate language]: https://support.google.com/webmasters/answer/2620865?hl=en
