@@ -98,7 +98,8 @@ func (s *Sitemap) GetXMLOutput() ([]byte, error) {
 		o = append(o, b)
 	}
 
-	// Fix to remove ugly xml with empty body
+	// Ugly fix to remove ugly xml with empty body
+	// TODO Remove when https://github.com/golang/go/issues/21399 is merged and released
 	outputString := fmt.Sprintf("%s", o)
 	outputFix := strings.Replace(outputString, "></xhtml:link>", "/>", -1)
 
